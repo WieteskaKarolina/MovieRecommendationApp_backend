@@ -7,21 +7,21 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(name = "ratings")
-public class Ratings {
+@Table(name = "interaction")
+public class Interaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "rating_id", nullable = false)
-    private Long rating_id;
+    @Column(name = "interaction_id", nullable = false)
+    private Long interaction_id;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private Users user;
+    private User user;
 
     @ManyToOne
     @JoinColumn(name = "movie_id", nullable = false)
-    private Movies movie;
+    private Movie movie;
 
-    @Column(name = "rating", nullable = false)
-    private int rating;
+    @Column(name = "interaction_type", length = 50)
+    private String interaction_type;
 }

@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.example.demo.models;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -7,12 +7,12 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(name = "interaction")
-public class Interaction {
+@Table(name = "rating")
+public class Rating {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "interaction_id", nullable = false)
-    private Long interaction_id;
+    @Column(name = "rating_id", nullable = false)
+    private Long rating_id;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -22,6 +22,6 @@ public class Interaction {
     @JoinColumn(name = "movie_id", nullable = false)
     private Movie movie;
 
-    @Column(name = "interaction_type", length = 50)
-    private String interaction_type;
+    @Column(name = "rating", nullable = false)
+    private int rating;
 }

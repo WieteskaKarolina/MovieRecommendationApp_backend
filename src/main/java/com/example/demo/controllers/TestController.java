@@ -29,7 +29,7 @@ public class TestController {
 
     @GetMapping("/user")
     public  ResponseEntity<Movie>  userAccess() {
-        Movie movie = new Movie("blabla", "comedy");
+        Movie movie = new Movie("blabla", "comedy", 1234L, "safa");
         return new ResponseEntity<>(movie, HttpStatus.OK);
         //return movieService.fetchTopTenMovies();
 

@@ -25,8 +25,16 @@ public class Movie {
     @Column(name = "poster_url")
     private String poster_url;
 
-    public Movie(String title, String poster_url) {
+    @Column(name = "backdrop_url")
+    private String backdrop_url;
+
+    @Column(name = "api_id")
+    private Long api_id;
+
+    public Movie(String title, String poster_url, Long api_id, String backdrop_url) {
         this.title = title;
         this.poster_url = poster_url;
+        this.api_id = api_id;
+        this.backdrop_url = backdrop_url;
     }
 }

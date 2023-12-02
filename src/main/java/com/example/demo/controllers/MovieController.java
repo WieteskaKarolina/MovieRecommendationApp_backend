@@ -48,6 +48,21 @@ public class MovieController {
         }
     }
 
+    @GetMapping("/getMovie")
+    public ResponseEntity<Movie> getMovieDetailsById(@RequestParam String id) throws IOException, InterruptedException {
+        try {
+            Movie movie = movieService.getMovieDetailsById(id);
+            if (movie == null) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+
+            return new ResponseEntity<>(movie, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
     @GetMapping("/genre")
     public ResponseEntity<List<Movie>> genreFilter(@RequestParam String query) throws IOException, InterruptedException {
         try {

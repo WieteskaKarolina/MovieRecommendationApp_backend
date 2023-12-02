@@ -3,19 +3,10 @@ package com.example.demo.services;
 import com.example.demo.models.Movie;
 import com.example.demo.models.MovieGenres;
 import com.example.demo.repository.MovieRepository;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.core.io.JsonStringEncoder;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -64,9 +55,14 @@ public class MovieService {
             String title = movie.getString("title");
             String posterPath = movie.getString("poster_path");
             // JSONArray genreIds = movie.getJSONArray("genre_ids");
-
-
-            allMovies.add(new Movie(title, "https://image.tmdb.org/t/p/original/"+posterPath));
+            Long apiId = movie.getLong("id");
+            String backdropPath = movie.optString("backdrop_path", null);
+            if (backdropPath == null) {
+                backdropPath = "https://static.thenounproject.com/png/318479-200.png";
+            } else {
+                backdropPath = "https://image.tmdb.org/t/p/original" + backdropPath;
+            }
+            allMovies.add(new Movie(title, "https://image.tmdb.org/t/p/original/" + posterPath, apiId, backdropPath));
         }
         return allMovies;
     }
@@ -74,7 +70,7 @@ public class MovieService {
     public List<Movie> searchMovies(String query) throws IOException, InterruptedException {
         query = query.replaceAll("%20", "%2B");
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.themoviedb.org/3/search/movie?query="+query+"&include_adult=false&language=en-US&page=1"))
+                .uri(URI.create("https://api.themoviedb.org/3/search/movie?query=" + query + "&include_adult=false&language=en-US&page=1"))
                 .header("accept", "application/json")
                 .header("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4YWMxZTE1MmRmYTNjZmRhOGFiMzc1ZTQ4MDFjYjk4YSIsInN1YiI6IjY1NThkZjhmMDgxNmM3MDEzN2VhN2EyZSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.UbtVWJuS3IqCTIfYh4EqXywhvfdEjRNPxMIRsel4xPk")
                 .method("GET", HttpRequest.BodyPublishers.noBody())
@@ -100,7 +96,14 @@ public class MovieService {
                 posterPath = "https://image.tmdb.org/t/p/original" + posterPath;
             }
 
-            allMovies.add(new Movie(title, posterPath));
+            String backdropPath = movie.optString("backdrop_path", null);
+            if (backdropPath == null) {
+                backdropPath = "https://static.thenounproject.com/png/318479-200.png";
+            } else {
+                backdropPath = "https://image.tmdb.org/t/p/original" + backdropPath;
+            }
+            Long apiId = movie.getLong("id");
+            allMovies.add(new Movie(title, posterPath, apiId, backdropPath));
 
         }
         return allMovies;
@@ -109,7 +112,7 @@ public class MovieService {
 
     public List<Movie> genreFilter(String genre) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=popularity.desc&with_genres="+MovieGenres.getGenreIdByName(genre)))
+                .uri(URI.create("https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=popularity.desc&with_genres=" + MovieGenres.getGenreIdByName(genre)))
                 .header("accept", "application/json")
                 .header("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4YWMxZTE1MmRmYTNjZmRhOGFiMzc1ZTQ4MDFjYjk4YSIsInN1YiI6IjY1NThkZjhmMDgxNmM3MDEzN2VhN2EyZSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.UbtVWJuS3IqCTIfYh4EqXywhvfdEjRNPxMIRsel4xPk")
                 .method("GET", HttpRequest.BodyPublishers.noBody())
@@ -128,10 +131,44 @@ public class MovieService {
             String title = movie.getString("title");
             String posterPath = movie.getString("poster_path");
             // JSONArray genreIds = movie.getJSONArray("genre_ids");
-
-
-            allMovies.add(new Movie(title, "https://image.tmdb.org/t/p/original/"+posterPath));
+            Long apiId = movie.getLong("id");
+            String backdropPath = movie.optString("backdrop_path", null);
+            if (backdropPath == null) {
+                backdropPath = "https://static.thenounproject.com/png/318479-200.png";
+            } else {
+                backdropPath = "https://image.tmdb.org/t/p/original" + backdropPath;
+            }
+            allMovies.add(new Movie(title, "https://image.tmdb.org/t/p/original/" + posterPath, apiId, backdropPath));
         }
         return allMovies;
+    }
+
+    public Movie getMovieDetailsById(String id) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.themoviedb.org/3/movie/" + id + "?language=en-US"))
+                .header("accept", "application/json")
+                .header("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4YWMxZTE1MmRmYTNjZmRhOGFiMzc1ZTQ4MDFjYjk4YSIsInN1YiI6IjY1NThkZjhmMDgxNmM3MDEzN2VhN2EyZSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.UbtVWJuS3IqCTIfYh4EqXywhvfdEjRNPxMIRsel4xPk")
+                .method("GET", HttpRequest.BodyPublishers.noBody())
+                .build();
+
+        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        String responseBody = response.body();
+        JSONObject movie = new JSONObject(responseBody);
+
+        String title = movie.optString("title", "Unknown Title");
+        String posterPath = movie.optString("poster_path", null);
+        if (posterPath == null) {
+            posterPath = "https://static.thenounproject.com/png/318479-200.png";
+        } else {
+            posterPath = "https://image.tmdb.org/t/p/original" + posterPath;
+        }
+        String backdropPath = movie.optString("backdrop_path", null);
+        if (backdropPath == null) {
+            backdropPath = "https://static.thenounproject.com/png/318479-200.png";
+        } else {
+            backdropPath = "https://image.tmdb.org/t/p/original" + backdropPath;
+        }
+        Long apiId = movie.getLong("id");
+        return new Movie(title, posterPath, apiId, backdropPath);
     }
 }

@@ -17,6 +17,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 
 @Service
@@ -35,140 +36,113 @@ public class MovieService {
         return movieRepository.findAll();
     }
 
+    public void saveMovie(Movie movie) {
+        movieRepository.save(movie);
+    }
+
     public List<Movie> fetchTopTenMovies() throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.themoviedb.org/3/movie/popular?language=en-US&page=1"))
-                .header("accept", "application/json")
-                .header("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4YWMxZTE1MmRmYTNjZmRhOGFiMzc1ZTQ4MDFjYjk4YSIsInN1YiI6IjY1NThkZjhmMDgxNmM3MDEzN2VhN2EyZSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.UbtVWJuS3IqCTIfYh4EqXywhvfdEjRNPxMIRsel4xPk")
-                .method("GET", HttpRequest.BodyPublishers.noBody())
-                .build();
-        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        URI uri = URI.create("https://api.themoviedb.org/3/movie/popular?language=en-US&page=1");
+        String responseBody = getHttpRequestBody(uri);
 
-        List<Movie> allMovies = new ArrayList<>();
-        String responseBody = response.body();
+        JSONObject responseObject = new JSONObject(responseBody);
+        JSONArray movieArray = responseObject.getJSONArray("results");
 
-        JSONObject json = new JSONObject(responseBody);
-        JSONArray results = json.getJSONArray("results");
-
-        for (int i = 0; i < results.length(); i++) {
-            JSONObject movie = results.getJSONObject(i);
-            String title = movie.getString("title");
-            String posterPath = movie.getString("poster_path");
-            // JSONArray genreIds = movie.getJSONArray("genre_ids");
-            Long apiId = movie.getLong("id");
-            String backdropPath = movie.optString("backdrop_path", null);
-            if (backdropPath == null) {
-                backdropPath = "https://static.thenounproject.com/png/318479-200.png";
-            } else {
-                backdropPath = "https://image.tmdb.org/t/p/original" + backdropPath;
-            }
-            allMovies.add(new Movie(title, "https://image.tmdb.org/t/p/original/" + posterPath, apiId, backdropPath));
-        }
-        return allMovies;
+        return getMovieListFromJSONObject(movieArray);
     }
 
     public List<Movie> searchMovies(String query) throws IOException, InterruptedException {
-        query = query.replaceAll("%20", "%2B");
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.themoviedb.org/3/search/movie?query=" + query + "&include_adult=false&language=en-US&page=1"))
-                .header("accept", "application/json")
-                .header("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4YWMxZTE1MmRmYTNjZmRhOGFiMzc1ZTQ4MDFjYjk4YSIsInN1YiI6IjY1NThkZjhmMDgxNmM3MDEzN2VhN2EyZSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.UbtVWJuS3IqCTIfYh4EqXywhvfdEjRNPxMIRsel4xPk")
-                .method("GET", HttpRequest.BodyPublishers.noBody())
-                .build();
+        URI uri = URI.create("https://api.themoviedb.org/3/search/movie?query=" + query.replaceAll("%20", "%2B") + "&include_adult=false&language=en-US&page=1");
+        String responseBody = getHttpRequestBody(uri);
 
-        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        JSONObject responseObject = new JSONObject(responseBody);
+        JSONArray movieArray = responseObject.getJSONArray("results");
 
-        List<Movie> allMovies = new ArrayList<>();
-        String responseBody = response.body();
-
-        JSONObject json = new JSONObject(responseBody);
-        JSONArray results = json.getJSONArray("results");
-
-        for (int i = 0; i < results.length(); i++) {
-            JSONObject movie = results.getJSONObject(i);
-
-            // Check for missing or null values
-            String title = movie.optString("title", "Unknown Title");
-            String posterPath = movie.optString("poster_path", null);
-            if (posterPath == null) {
-                posterPath = "https://static.thenounproject.com/png/318479-200.png";
-            } else {
-                posterPath = "https://image.tmdb.org/t/p/original" + posterPath;
-            }
-
-            String backdropPath = movie.optString("backdrop_path", null);
-            if (backdropPath == null) {
-                backdropPath = "https://static.thenounproject.com/png/318479-200.png";
-            } else {
-                backdropPath = "https://image.tmdb.org/t/p/original" + backdropPath;
-            }
-            Long apiId = movie.getLong("id");
-            allMovies.add(new Movie(title, posterPath, apiId, backdropPath));
-
-        }
-        return allMovies;
+        return getMovieListFromJSONObject(movieArray);
     }
 
 
     public List<Movie> genreFilter(String genre) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=popularity.desc&with_genres=" + MovieGenres.getGenreIdByName(genre)))
-                .header("accept", "application/json")
-                .header("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4YWMxZTE1MmRmYTNjZmRhOGFiMzc1ZTQ4MDFjYjk4YSIsInN1YiI6IjY1NThkZjhmMDgxNmM3MDEzN2VhN2EyZSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.UbtVWJuS3IqCTIfYh4EqXywhvfdEjRNPxMIRsel4xPk")
-                .method("GET", HttpRequest.BodyPublishers.noBody())
-                .build();
+        URI uri = URI.create("https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=popularity.desc&with_genres=" + MovieGenres.getGenreIdByName(genre));
+        String responseBody = getHttpRequestBody(uri);
 
-        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        JSONObject responseObject = new JSONObject(responseBody);
+        JSONArray movieArray = responseObject.getJSONArray("results");
 
-        List<Movie> allMovies = new ArrayList<>();
-        String responseBody = response.body();
+        return getMovieListFromJSONObject(movieArray);
+    }
 
-        JSONObject json = new JSONObject(responseBody);
-        JSONArray results = json.getJSONArray("results");
+    public Movie getMovieDetailsById(String id) throws IOException, InterruptedException {
+        URI uri = URI.create("https://api.themoviedb.org/3/movie/" + id + "?language=en-US");
+        String responseBody = getHttpRequestBody(uri);
+        JSONObject movieObject = new JSONObject(responseBody);
+        Movie movie = getMovieFromJSONObject(movieObject);
+        saveMovie(movie);
+        return movie;
+    }
 
-        for (int i = 0; i < results.length(); i++) {
-            JSONObject movie = results.getJSONObject(i);
-            String title = movie.getString("title");
-            String posterPath = movie.getString("poster_path");
-            // JSONArray genreIds = movie.getJSONArray("genre_ids");
-            Long apiId = movie.getLong("id");
-            String backdropPath = movie.optString("backdrop_path", null);
-            if (backdropPath == null) {
-                backdropPath = "https://static.thenounproject.com/png/318479-200.png";
-            } else {
-                backdropPath = "https://image.tmdb.org/t/p/original" + backdropPath;
+
+    public Movie getMovieFromJSONObject(JSONObject movieObject) {
+        String title = movieObject.getString("title");
+        String overview = movieObject.optString("overview");
+        Integer voteCount = movieObject.optInt("vote_count");
+        Double voteAverage = movieObject.optDouble("vote_average");
+        String releaseDate = movieObject.optString("release_date");
+        Long apiId = movieObject.getLong("id");
+
+        List<String> genres = new ArrayList<>();
+
+        // Check if "genres" array is present
+        if (movieObject.has("genres")) {
+            JSONArray genresArray = movieObject.getJSONArray("genres");
+
+            // Extract genre names from the array of objects
+            for (int i = 0; i < genresArray.length(); i++) {
+                JSONObject genreObject = genresArray.getJSONObject(i);
+                String genreName = genreObject.getString("name");
+                genres.add(genreName);
             }
-            allMovies.add(new Movie(title, "https://image.tmdb.org/t/p/original/" + posterPath, apiId, backdropPath));
+        } else if (movieObject.has("genre_ids")) {
+            // If "genres" array is not present, check for "genre_ids" array
+            JSONArray genreIdsArray = movieObject.getJSONArray("genre_ids");
+
+            // Map genre IDs to genre names using MovieGenres.getGenreById
+            genres = IntStream.range(0, genreIdsArray.length())
+                    .mapToObj(genreIdsArray::getInt)
+                    .map(MovieGenres::getGenreById)
+                    .toList();
+        }
+
+        String posterPathString = movieObject.optString("poster_path", null);
+        String backdropPathString = movieObject.optString("backdrop_path", null);
+        String TMDB_API_POSTERS = "https://image.tmdb.org/t/p/original";
+        String EMPTY_POSTER = "https://static.thenounproject.com/png/318479-200.png";
+        String posterPath = (posterPathString == null) ? EMPTY_POSTER : TMDB_API_POSTERS + posterPathString;
+        String backdropPath = (backdropPathString == null) ? EMPTY_POSTER : TMDB_API_POSTERS + backdropPathString;
+
+        return new Movie(apiId, title, overview, voteCount, voteAverage, releaseDate, genres, posterPath, backdropPath);
+    }
+
+    public List<Movie> getMovieListFromJSONObject(JSONArray movieArray) {
+        List<Movie> allMovies = new ArrayList<>();
+
+        for (int i = 0; i < movieArray.length(); i++) {
+            JSONObject movieObject = movieArray.getJSONObject(i);
+            Movie movie = getMovieFromJSONObject(movieObject);
+            saveMovie(movie);
+            allMovies.add(movie);
         }
         return allMovies;
     }
 
-    public Movie getMovieDetailsById(String id) throws IOException, InterruptedException {
+    public String getHttpRequestBody(URI uri) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.themoviedb.org/3/movie/" + id + "?language=en-US"))
+                .uri(uri)
                 .header("accept", "application/json")
                 .header("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4YWMxZTE1MmRmYTNjZmRhOGFiMzc1ZTQ4MDFjYjk4YSIsInN1YiI6IjY1NThkZjhmMDgxNmM3MDEzN2VhN2EyZSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.UbtVWJuS3IqCTIfYh4EqXywhvfdEjRNPxMIRsel4xPk")
                 .method("GET", HttpRequest.BodyPublishers.noBody())
                 .build();
 
         HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-        String responseBody = response.body();
-        JSONObject movie = new JSONObject(responseBody);
-
-        String title = movie.optString("title", "Unknown Title");
-        String posterPath = movie.optString("poster_path", null);
-        if (posterPath == null) {
-            posterPath = "https://static.thenounproject.com/png/318479-200.png";
-        } else {
-            posterPath = "https://image.tmdb.org/t/p/original" + posterPath;
-        }
-        String backdropPath = movie.optString("backdrop_path", null);
-        if (backdropPath == null) {
-            backdropPath = "https://static.thenounproject.com/png/318479-200.png";
-        } else {
-            backdropPath = "https://image.tmdb.org/t/p/original" + backdropPath;
-        }
-        Long apiId = movie.getLong("id");
-        return new Movie(title, posterPath, apiId, backdropPath);
+        return response.body();
     }
 }

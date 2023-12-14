@@ -2,16 +2,15 @@ package com.example.demo.controllers;
 
 import com.example.demo.models.Movie;
 import com.example.demo.services.MovieService;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
+import com.example.demo.services.RatingDto;
+import com.example.demo.services.RatingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +20,9 @@ import java.util.List;
 public class MovieController {
     @Autowired
     private MovieService movieService;
+
+    @Autowired
+    private RatingService ratingService;
 
     @GetMapping("/topten")
     public ResponseEntity<List<Movie>> getTopTen() {
@@ -74,6 +76,13 @@ public class MovieController {
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @PostMapping("/ratings")
+    public ResponseEntity<String> submitRating(@RequestBody RatingDto ratingDto, Principal principal) {
+        String username = principal.getName();
+        ratingService.submitRating(username, ratingDto);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
 //    @GetMapping("/{id}")

@@ -85,6 +85,13 @@ public class MovieController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @GetMapping("/ratings/{movieId}")
+    public ResponseEntity<Integer> getMovieRate(@PathVariable Long movieId, Principal principal) {
+        String username = principal.getName();
+        int userRate = ratingService.getMovieRate(username, movieId);
+        return new ResponseEntity<>(userRate, HttpStatus.OK);
+    }
+
 //    @GetMapping("/{id}")
 //    public ResponseEntity<Movie> getMovieById(@PathVariable("id") long id) {
 //        Optional<Movie> MovieData = movieRepository.findById(id);

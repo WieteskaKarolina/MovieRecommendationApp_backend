@@ -28,11 +28,28 @@ public class RatingService {
         Movie movie = movieRepository.findById(ratingDto.getMovieId())
                 .orElseThrow(() -> new RuntimeException("Movie not found"));
 
-        Rating rating = new Rating();
-        rating.setUser(user);
-        rating.setMovie(movie);
-        rating.setRating(ratingDto.getRating());
+        Rating existingRating = ratingRepository.findByUserAndMovie(user, movie);
 
-        ratingRepository.save(rating);
+        if (existingRating != null) {
+            existingRating.setRating(ratingDto.getRating());
+        } else {
+            Rating newRating = new Rating();
+            newRating.setUser(user);
+            newRating.setMovie(movie);
+            newRating.setRating(ratingDto.getRating());
+            ratingRepository.save(newRating);
+        }
+    }
+
+    public int getMovieRate(String username, Long movieId) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new RuntimeException("Movie not found"));
+
+        Rating existingRating = ratingRepository.findByUserAndMovie(user, movie);
+
+        return existingRating != null ? existingRating.getRating() : 0;
     }
 }

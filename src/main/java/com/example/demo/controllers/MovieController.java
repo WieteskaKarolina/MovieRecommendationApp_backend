@@ -1,9 +1,7 @@
 package com.example.demo.controllers;
 
 import com.example.demo.models.Movie;
-import com.example.demo.services.MovieService;
-import com.example.demo.services.RatingDto;
-import com.example.demo.services.RatingService;
+import com.example.demo.services.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +21,12 @@ public class MovieController {
 
     @Autowired
     private RatingService ratingService;
+
+    @Autowired
+    private WatchedService watchedService;
+
+    @Autowired
+    private WatchLaterService watchLaterService;
 
     @GetMapping("/topten")
     public ResponseEntity<List<Movie>> getTopTen() {
@@ -92,50 +96,81 @@ public class MovieController {
         return new ResponseEntity<>(userRate, HttpStatus.OK);
     }
 
-//    @GetMapping("/{id}")
-//    public ResponseEntity<Movie> getMovieById(@PathVariable("id") long id) {
-//        Optional<Movie> MovieData = movieRepository.findById(id);
-//
-//        if (MovieData.isPresent()) {
-//            return new ResponseEntity<>(MovieData.get(), HttpStatus.OK);
-//        } else {
-//            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-//        }
-//    }
+    @PostMapping("/addMovieToWatched/{movieId}")
+    public ResponseEntity<String> addMovieToWatched(@PathVariable Long movieId, Principal principal) {
+        try {
+            String username = principal.getName();
+            watchedService.addWatchedMovie(username, movieId);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            // Log the exception for debugging purposes
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-//    @PostMapping("/")
-//    public ResponseEntity<Movie> createMovie(@RequestBody Movie Movie) {
-//        try {
-//            Movie _Movie = movieRepository
-//                    .save(new Movie(Movie.getTitle(), Movie.getDescription(), false));
-//            return new ResponseEntity<>(_Movie, HttpStatus.CREATED);
-//        } catch (Exception e) {
-//            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
-//
-//    @PutMapping("/{id}")
-//    public ResponseEntity<Movie> updateMovie(@PathVariable("id") long id, @RequestBody Movie Movie) {
-//        Optional<Movie> MovieData = MovieRepository.findById(id);
-//
-//        if (MovieData.isPresent()) {
-//            Movie _Movie = MovieData.get();
-//            _Movie.setTitle(Movie.getTitle());
-//            _Movie.setDescription(Movie.getDescription());
-//            _Movie.setPublished(Movie.isPublished());
-//            return new ResponseEntity<>(MovieRepository.save(_Movie), HttpStatus.OK);
-//        } else {
-//            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-//        }
-//    }
-//
-//    @DeleteMapping("/Movies/{id}")
-//    public ResponseEntity<HttpStatus> deleteMovie(@PathVariable("id") long id) {
-//        try {
-//            MovieRepository.deleteById(id);
-//            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-//        } catch (Exception e) {
-//            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
+
+    @PostMapping("/deleteMovieFromWatched/{movieId}")
+    public ResponseEntity<String> deleteMovieFromWatched(@PathVariable Long movieId, Principal principal) {
+        try {
+            String username = principal.getName();
+            watchedService.deleteWatchedMovie(username, movieId);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/getWatchedMovies")
+    public ResponseEntity<List<Movie>> getWatchedMovies(Principal principal) {
+        try {
+            String username = principal.getName();
+            List<Movie> movies = watchedService.getWatchedListForUser(username);
+            return new ResponseEntity<>(movies, HttpStatus.OK);
+        } catch (Exception e) {
+            // Log the exception and return a proper error response
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // toWatch
+
+    @PostMapping("/addMovieToWatchLater/{movieId}")
+    public ResponseEntity<String> addMovieToToWatch(@PathVariable Long movieId, Principal principal) {
+        try {
+            String username = principal.getName();
+            watchLaterService.addMovieToWatchLater(username, movieId);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            // Log the exception for debugging purposes
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @PostMapping("/removeMovieFromWatchLater/{movieId}")
+    public ResponseEntity<String> deleteMovieFromToWatch(@PathVariable Long movieId, Principal principal) {
+        try {
+            String username = principal.getName();
+            watchLaterService.removeMovieFromWatchLater(username, movieId);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/getWatchLaterList")
+    public ResponseEntity<List<Movie>> getToWatchMovies(Principal principal) {
+        try {
+            String username = principal.getName();
+            List<Movie> movies = watchLaterService.getWatchLaterListForUser(username);
+            return new ResponseEntity<>(movies, HttpStatus.OK);
+        } catch (Exception e) {
+            // Log the exception and return a proper error response
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

@@ -1,7 +1,10 @@
 package com.example.demo.controllers;
 
+import com.example.demo.models.Comment;
 import com.example.demo.models.Movie;
+import com.example.demo.models.MovieSearch;
 import com.example.demo.services.*;
+import org.hibernate.tool.schema.spi.CommandAcceptanceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +31,12 @@ public class MovieController {
     @Autowired
     private WatchLaterService watchLaterService;
 
+    @Autowired
+    private CommentService commentService;
+
+    @Autowired
+    private MovieSearchService movieSearchService;
+
     @GetMapping("/topten")
     public ResponseEntity<List<Movie>> getTopTen() {
         try {
@@ -42,12 +51,16 @@ public class MovieController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Movie>> searchMovies(@RequestParam String query) throws IOException, InterruptedException {
+    public ResponseEntity<List<Movie>> searchMovies(@RequestParam String query, Principal principal) throws IOException, InterruptedException {
         try {
+            String username = principal.getName();
+
             List<Movie> movies = new ArrayList<>(movieService.searchMovies(query));
             if (movies.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
+            List<Long> movieIds = new MovieIdExtractor().extractMovieIds(movies);
+            movieSearchService.saveMovieSearch(query, movieIds, username);
             return new ResponseEntity<>(movies, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -173,4 +186,43 @@ public class MovieController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("/getCommentsForMovie")
+    public ResponseEntity<List<Comment>> getCommentsForMovie(@RequestParam Long movieId) {
+        try {
+            List<Comment> comments = commentService.getCommentsForMovie(movieId);
+            return new ResponseEntity<>(comments, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public static class CommentRequest {
+        private Long movieId;
+        private String text;
+
+        public Long getMovieId() {
+            return movieId;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+    }
+
+
+    @PostMapping("/addComment")
+    public ResponseEntity<String> addComment(@RequestBody CommentRequest request, Principal principal) {
+        try {
+            String username = principal.getName();
+            commentService.addComment(request.getMovieId(), request.getText(), username);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            // Log the exception and return a proper error response
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }

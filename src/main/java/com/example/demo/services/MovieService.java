@@ -86,6 +86,7 @@ public class MovieService {
         String overview = movieObject.optString("overview");
         Integer voteCount = movieObject.optInt("vote_count");
         Double voteAverage = movieObject.optDouble("vote_average");
+        Double popularity = movieObject.optDouble("popularity");
         String releaseDate = movieObject.optString("release_date");
         Long apiId = movieObject.getLong("id");
 
@@ -111,7 +112,7 @@ public class MovieService {
                     .map(MovieGenres::getGenreById)
                     .toList();
         }
-
+        String genresString = String.join("|", genres);
         String posterPathString = movieObject.optString("poster_path", null);
         String backdropPathString = movieObject.optString("backdrop_path", null);
         String TMDB_API_POSTERS = "https://image.tmdb.org/t/p/original";
@@ -119,7 +120,7 @@ public class MovieService {
         String posterPath = (posterPathString == null) ? EMPTY_POSTER : TMDB_API_POSTERS + posterPathString;
         String backdropPath = (backdropPathString == null) ? EMPTY_POSTER : TMDB_API_POSTERS + backdropPathString;
 
-        return new Movie(apiId, title, overview, voteCount, voteAverage, releaseDate, genres, posterPath, backdropPath);
+        return new Movie(apiId, title, overview, voteCount, voteAverage, popularity, releaseDate, genresString, posterPath, backdropPath);
     }
 
     public List<Movie> getMovieListFromJSONObject(JSONArray movieArray) {

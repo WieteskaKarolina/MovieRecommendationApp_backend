@@ -37,10 +37,49 @@ public class MovieController {
     @Autowired
     private MovieSearchService movieSearchService;
 
-    @GetMapping("/topten")
-    public ResponseEntity<List<Movie>> getTopTen() {
+    @GetMapping("/popular")
+    public ResponseEntity<List<Movie>> getPopular() {
         try {
-            List<Movie> movies = new ArrayList<>(movieService.fetchTopTenMovies());
+            List<Movie> movies = new ArrayList<>(movieService.fetchPopularMovies());
+            if (movies.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(movies, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/nowPlaying")
+    public ResponseEntity<List<Movie>> getNowPlaying() {
+        try {
+            List<Movie> movies = new ArrayList<>(movieService.fetchNowPlayingMovies());
+            if (movies.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(movies, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/topRated")
+    public ResponseEntity<List<Movie>> getTopRated() {
+        try {
+            List<Movie> movies = new ArrayList<>(movieService.fetchTopRatedMovies());
+            if (movies.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(movies, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/upcoming")
+    public ResponseEntity<List<Movie>> getUpcoming() {
+        try {
+            List<Movie> movies = new ArrayList<>(movieService.fetchUpcomingMovies());
             if (movies.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
@@ -76,6 +115,48 @@ public class MovieController {
             }
 
             return new ResponseEntity<>(movie, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/getRecommended")
+    public ResponseEntity<List<Movie>> getRecommendedMoviesById(@RequestParam String id) throws IOException, InterruptedException {
+        try {
+            List<Movie> movies = movieService.fetchRecommendedMovies(id);
+            if (movies == null || movies.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+
+            return new ResponseEntity<>(movies, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/getSimilar")
+    public ResponseEntity<List<Movie>> getSimilarMoviesById(@RequestParam String id) throws IOException, InterruptedException {
+        try {
+            List<Movie> movies = movieService.fetchSimilarMovies(id);
+            if (movies == null || movies.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+
+            return new ResponseEntity<>(movies, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/getMoviesByIds")
+    public ResponseEntity<List<Movie>> getMoviesDetailsByIds(@RequestParam List<String> ids) throws IOException, InterruptedException {
+        try {
+            List<Movie> movies = movieService.getMoviesDetailsByIds(ids);
+            if (movies == null || movies.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+
+            return new ResponseEntity<>(movies, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }

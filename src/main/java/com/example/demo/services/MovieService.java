@@ -40,7 +40,7 @@ public class MovieService {
         movieRepository.save(movie);
     }
 
-    public List<Movie> fetchTopTenMovies() throws IOException, InterruptedException {
+    public List<Movie> fetchPopularMovies() throws IOException, InterruptedException {
         URI uri = URI.create("https://api.themoviedb.org/3/movie/popular?language=en-US&page=1");
         String responseBody = getHttpRequestBody(uri);
 
@@ -49,6 +49,60 @@ public class MovieService {
 
         return getMovieListFromJSONObject(movieArray);
     }
+
+    public List<Movie> fetchNowPlayingMovies() throws IOException, InterruptedException {
+        URI uri = URI.create("https://api.themoviedb.org/3/movie/now_playing?language=en-US&page=1");
+        String responseBody = getHttpRequestBody(uri);
+
+        JSONObject responseObject = new JSONObject(responseBody);
+        JSONArray movieArray = responseObject.getJSONArray("results");
+
+        return getMovieListFromJSONObject(movieArray);
+    }
+
+    public List<Movie> fetchTopRatedMovies() throws IOException, InterruptedException {
+        URI uri = URI.create("https://api.themoviedb.org/3/movie/top_rated?language=en-US&page=1");
+        String responseBody = getHttpRequestBody(uri);
+
+        JSONObject responseObject = new JSONObject(responseBody);
+        JSONArray movieArray = responseObject.getJSONArray("results");
+
+        return getMovieListFromJSONObject(movieArray);
+    }
+
+
+    public List<Movie> fetchUpcomingMovies() throws IOException, InterruptedException {
+        URI uri = URI.create("https://api.themoviedb.org/3/movie/upcoming?language=en-US&page=1");
+        String responseBody = getHttpRequestBody(uri);
+
+        JSONObject responseObject = new JSONObject(responseBody);
+        JSONArray movieArray = responseObject.getJSONArray("results");
+
+        return getMovieListFromJSONObject(movieArray);
+    }
+
+    public List<Movie> fetchRecommendedMovies(String movieId) throws IOException, InterruptedException {
+        URI uri = URI.create("https://api.themoviedb.org/3/movie/" + movieId + "/recommendations?language=en-US&page=1");
+
+        String responseBody = getHttpRequestBody(uri);
+
+        JSONObject responseObject = new JSONObject(responseBody);
+        JSONArray movieArray = responseObject.getJSONArray("results");
+
+        return getMovieListFromJSONObject(movieArray);
+    }
+
+    public List<Movie> fetchSimilarMovies(String movieId) throws IOException, InterruptedException {
+        URI uri = URI.create("https://api.themoviedb.org/3/movie/" + movieId + "/similar?language=en-US&page=1");
+
+        String responseBody = getHttpRequestBody(uri);
+
+        JSONObject responseObject = new JSONObject(responseBody);
+        JSONArray movieArray = responseObject.getJSONArray("results");
+
+        return getMovieListFromJSONObject(movieArray);
+    }
+
 
     public List<Movie> searchMovies(String query) throws IOException, InterruptedException {
         URI uri = URI.create("https://api.themoviedb.org/3/search/movie?query=" + query.replaceAll("%20", "%2B") + "&include_adult=false&language=en-US&page=1");
@@ -69,6 +123,16 @@ public class MovieService {
         JSONArray movieArray = responseObject.getJSONArray("results");
 
         return getMovieListFromJSONObject(movieArray);
+    }
+
+    public List<Movie> getMoviesDetailsByIds(List<String> ids) throws IOException, InterruptedException {
+        List<Movie> movies = new ArrayList<>();
+
+        for (String id : ids) {
+            movies.add(getMovieDetailsById(id));
+        }
+
+        return movies;
     }
 
     public Movie getMovieDetailsById(String id) throws IOException, InterruptedException {
